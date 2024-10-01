@@ -1,5 +1,0 @@
-- create a __init__.py file import all the classes and functions in the other .py files
-- create a pdb.py with a PDB class
-- create a gro.py with a GRO class
-- create a xvg.py with a XVG class
-- create a mixsolvmd with a MixSolvMD class

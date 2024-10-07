@@ -6,9 +6,28 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
-def binding_events(ligand_file, site_file, min_dist=0.6, unit='nm', time='ps', plot=False):
-	'''Analyse binding events between ligand and specific site from GROMACS simulation. It requires the trajectory of the CoM of the ligand and the CoM of the specific site'''
-	data={'Binding_events':[], 'Retention_times':[]}
+def binding_events(
+	ligand_file: str,
+	site_file: str,
+	min_dist: float = 0.6,
+	unit: str = 'nm',
+	time: str = 'ps',
+	plot: bool = False
+):
+	'''Analyse binding events between ligand and specific site from GROMACS simulation.
+	It requires the trajectories of the CoM of the ligand(s) and the CoM of the specific site and return a dictionary of the number of binding events with their retention time per ligand.
+	
+	ligand_file: name of the XVG file for ligand(s) CoM trajectories
+	site_file: name of the XVG file for site CoM trajectories
+	min_dist: minimum distance to consider a binding events (default 0.6 nm or 6 Ang)
+	unit: unit used for metrics (either "nm" or "Ang", default "nm")
+	time: unit used for time (either "ps" or "ns", default "ps")
+	plot: boolean (default False)
+	'''
+	data={
+	'Binding_events':[],
+	'Retention_times':[]
+	}
 	# Get the trajectories from files
 	lig_xvg=XVG(ligand_file)
 	lig_traj=lig_xvg.get3Dcoord()

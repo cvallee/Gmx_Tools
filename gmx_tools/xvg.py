@@ -5,8 +5,16 @@ import numpy as np
 import os
 
 class XVG:
-    '''Convert an .xvg file into a python object'''
-    def __init__(self, file, parse=True):
+    '''
+    Converts an .xvg file into a python object.
+
+    file: name of the XVG file
+    '''
+    def __init__(
+        self,
+        file: str,
+        parse: bool = True
+    ):
         self.filepath = os.path.abspath(file)
         if '\\' in self.filepath:
             self.filename = self.filepath.split('\\')[-1]
@@ -22,8 +30,7 @@ class XVG:
             self.parse_file()
     
     def parse_file(self):
-        if self.filename.split('.')[-1] != 'xvg':
-            raise ValueError('ERROR! File provided is not an XVG file')
+        assert self.filename.split('.')[-1] == 'xvg', 'ERROR! File provided is not an XVG file.'
         
         with open(self.filepath, 'r') as f:
             data = {}
@@ -54,8 +61,16 @@ class XVG:
                 self.x_column = data[0]
                 self.y_columns = [data[i] for i in range(1,len(data))]
                     
-    def get3Dcoord(self, np_array=False):
-        '''Return a list of N 3D coordinates for each time step'''
+    def get3Dcoord(
+        self,
+        np_array: bool = False
+    ):
+        '''
+        Returns a list of N 3D coordinates for each time step
+
+        np_array: boolean (default False)
+        '''
+
         if not self.x_column and not self.y_columns:
             self.parse_file()
         assert len(self.y_columns) % 3 == 0
@@ -83,7 +98,27 @@ class XVG:
             
         return coordinates
 
-    def plot(self, title='', x_label='', y_label='', legends=[], show=False, save=False, **kwargs):
+    def plot(
+        self,
+        title: str | None = None,
+        x_label: str | None = None,
+        y_label: str | None = None,
+        legends: list | None = None,
+        show: bool = True,
+        save: str | bool = False,
+        **kwargs
+    ):
+        '''
+        Plots the XVG file using matplotlib
+
+
+        title: Title of the plot (default self.title)
+        x_label: label of the X axis (default self.x_label)
+        y_label: label of the Y axis (default self.y_label)
+        legends: name of the legends if any (default self.legends)
+        show: boolean (default True)
+        save: name of the output file or boolean (default False)
+        '''
         if not self.x_column and not self.y_columns:
             self.parse_file()
         import matplotlib.pyplot as plt

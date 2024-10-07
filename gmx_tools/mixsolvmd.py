@@ -1,156 +1,67 @@
 '''
 Mixed Solvent MD tools
 '''
+from .xvg import XVG
 import numpy as np
 
 class MixSolvMD:
     '''
-    MixSolvMD class to read and analyse mixed solvent MD runs (requires ligand trajectories in macromolecule and in bulk systems)
+    MixSolvMD class to read and analyse mixed solvent MD run.
+    It requires ligands trajectories in macromolecule and in bulk systems.
+
+    macromol_file: name of the XVG file for ligand(s) trajectories in macromolecule system
+    bulk_file: name of the XVG file for ligand(s) trajectories in bulk system
+    system_name: name of the system for PDB title
+    box: size of the simulation box (in nm)
+    membrane: boolean (default False)
+    temperature: temperature in which the trajectories have been sampled (in Kelvin, default 310.15)
     '''
-    def __init__(self, macromol_traj, bulk_traj, system_name='', box = [1.0,1.0,1.0], membrane=False, unit = 'Ang', temperature=310.15):
-        self.grid = []
+    def __init__(
+        self,
+        macromol_file: str,
+        bulk_file: str,
+        system_name:str | None = None,
+        box: list = [1.0,1.0,1.0],
+        membrane: bool = False,
+        temperature: float = 310.15
+    ):
         self.hotspots = []
         self.system_name = system_name
         self.box = box
-        self.unit = unit
-        if self.unit == 'nm':
-            vol_conv = 1e-24
-            memb_height = 4
-        elif self.unit == 'Ang':
-            vol_conv = 1e-27
-            memb_height = 40
-        else:
-            raise ValueError('ERROR! Metric unit is not valid!')
         self.avogadro=6.02214076e23         # Avogadro constant in mol-1
         self.R=1.985e-3                     # Gas constant in kcal.mol-1
         self.temperature = temperature
-        if macromol_traj and bulk_traj:
-            if len(macromol_traj) != len(bulk_traj):
+        self.macromol_traj=XVG(macromol_file).get3Dcoord()
+        self.bulk_traj=XVG(bulk_file).get3Dcoord()
+        if self.macromol_traj and self.bulk_traj:
+            if len(self.macromol_traj) != len(self.bulk_traj):
                 print("WARNING! Macromolecule and bulk trajectories don't have the same length! They probably don't have the same sampling time.")
-            if len(macromol_traj[0][0]) == 3 and len(bulk_traj[0][0]) == 3:
-                self.macromol_traj = macromol_traj
-                self.bulk_traj = bulk_traj
-            else:
-                raise ValueError('ERROR! Coordinates provided are not 3D coordinates!')
+            assert len(self.macromol_traj[0][0]) == 3 and len(self.bulk_traj[0][0]) == 3, 'ERROR! Coordinates provided are not 3D coordinates!'
         else:
             raise ValueError('ERROR! No macromolecule and/or bulk trajectories provided!')
         if membrane:
-            self.macromol_concentration = (len(macromol_traj[0])/(self.avogadro * (self.box[0]*self.box[1]*(self.box[2]-memb_height))*vol_conv))
-            self.bulk_concentration = (len(bulk_traj[0])/(self.avogadro * (self.box[0]*self.box[1]*(self.box[2]-memb_height))*vol_conv))
+            memb_height = 4
+            self.macromol_concentration = (len(self.macromol_traj[0])/(self.avogadro * (self.box[0]*self.box[1]*(self.box[2]-memb_height))*1e-24))
+            self.bulk_concentration = (len(self.bulk_traj[0])/(self.avogadro * (self.box[0]*self.box[1]*(self.box[2]-memb_height))*1e-24))
         else:
-            self.macromol_concentration = (len(macromol_traj[0])/(self.avogadro * (self.box[0]*self.box[1]*self.box[2])*vol_conv))
-            self.bulk_concentration = (len(bulk_traj[0])/(self.avogadro * (self.box[0]*self.box[1]*self.box[2])*vol_conv))
+            self.macromol_concentration = (len(self.macromol_traj[0])/(self.avogadro * (self.box[0]*self.box[1]*self.box[2])*1e-24))
+            self.bulk_concentration = (len(self.bulk_traj[0])/(self.avogadro * (self.box[0]*self.box[1]*self.box[2])*1e-24))
         if self.macromol_concentration != self.bulk_concentration:
             print("WARNING! Macromolecule and bulk systems don't have the same ligand concentrations")
-        
-    def gen_grid(self, x_limit=[], y_limit=[], z_limit=[], step=0.5):
-        all_x = []
-        all_y = []
-        all_z = []
-        for macromol_coords, bulk_coords in zip(self.macromol_traj, self.bulk_traj):
-            for macromol_c,bulk_c in zip(macromol_coords,bulk_coords):
-                all_x.append(macromol_c[0])
-                all_x.append(bulk_c[0])
-                all_y.append(macromol_c[1])
-                all_y.append(bulk_c[1])
-                all_z.append(macromol_c[2])
-                all_z.append(bulk_c[2])
-        xmin = min(all_x)
-        xmax = max(all_x)
-        if not x_limit:
-            x_limit=[0, self.box[0]]
-        if xmin < (x_limit[0]):
-            xmin = x_limit[0]
-        if xmax > (x_limit[-1]):
-            xmax = x_limit[-1]
-        ymin = min(all_y)
-        ymax = max(all_y)
-        if not y_limit:
-            y_limit=[0, self.box[1]]
-        if ymin < (y_limit[0]):
-            ymin = y_limit[0]
-        if ymax > (y_limit[-1]):
-            ymax = y_limit[-1]
-        zmin = min(all_z)
-        zmax = max(all_z)
-        if not z_limit:
-            z_limit = [0, self.box[2]]
-        if zmin < (z_limit[0]):
-            zmin = z_limit[0]
-        if zmax > (z_limit[-1]):
-            zmax = z_limit[-1]
-        
-        xv = np.arange(xmin, xmax, step)
-        yv = np.arange(ymin, ymax, step)
-        zv = np.arange(zmin, zmax, step)
-        
-        for x in xv:
-            for y in yv:
-                for z in zv:
-                    self.grid.append((x, x+step, y, y+step, z, z+step))
-        
-    def get_hotspots(self, step=0.5, progress=True):
-        # Generate grid
-        if not self.grid:
-            self.gen_grid(step=step)
-        
-        # Define functions
-        def is_inside(coords, cell):
-            # coords is a list of 3D coordinates
-            # cell is a tuple of (xmin, xmax, ymin, ymax, zmin, zmax) boundaries from self.grid
-            xmin, xmax, ymin, ymax, zmin, zmax = cell
 
-            check = [(xmin <= c[0] < xmax and ymin <= c[1] < ymax and zmin <= c[2] < zmax) for c in coords]
+    def get_hotspots(
+        self,
+        step: float = 0.2,
+        limits: list = []
+    ):
+        '''
+        Function to generate the hotspots from the trajectories.
 
-            # return a list of boolean for the coordinates inside the cell or not
-            return check
-        
-        def cell_center(cell):
-            # cell is a tuple of (xmin, xmax, ymin, ymax, zmin, zmax) boundaries from self.grid
-            xmin, xmax, ymin, ymax, zmin, zmax = cell
-            
-            # get the coordinate of the center of the cell
-            center = ((xmin+xmax)/2 , (ymin+ymax)/2 , (zmin+zmax)/2)
-            
-            return center
-        
-        # Run the count in grid
-        if progress:
-            from tqdm import tqdm
-            iteration = tqdm(self.grid)
-        else:
-            iteration = self.grid
-            # loop through the grid cells
-        for cell in iteration:
-            # initialize the count for this cell to zero
-            macromol_counts = 0
-            bulk_counts = 0
-            # loop through the coordinates with protein
-            for m_coord, b_coord in zip(self.macromol_traj, self.bulk_traj):
-                # check if the macromolecule coordinates are inside the cell
-                check = is_inside(m_coord, cell)
-                # increment the count for this cell by one
-                macromol_counts += sum(check)
-                # repeat for coordinates in bulk
-                check = is_inside(b_coord, cell)
-                # increment the count for this cell by one
-                bulk_counts += sum(check)
-                    
-            # append coordinates and counts if count_c1 - count_c2 > 0
-            diff = macromol_counts - bulk_counts
-            macromol_occup = macromol_counts / len(self.macromol_traj)
-            bulk_occup = bulk_counts / len(self.bulk_traj)
-            if diff > 0:
-                if bulk_occup == 0:
-                    self.hotspots.append([cell_center(cell), macromol_occup, np.nan])
-                else:
-                    free_energy = -self.R*self.temperature*np.log(macromol_occup/bulk_occup)
-                    self.hotspots.append([cell_center(cell), macromol_occup, free_energy])
-
-    def get_hotspots_v2(self, step=0.5, limits=[]):
-
-        def cell_center(cell):
-            # cell is a tuple of (xmin, xmax, ymin, ymax, zmin, zmax) boundaries from self.grid
+        step: voxel size (in nm, default = 0.2)
+        limits: list of x, y, and z limits to reduce the hotspots to a subregion of the system ([(x_low_limit, x_high_limit), (y_low_limit, y_high_limit), (z_low_limit, z_high_limit)])
+        '''
+        def cell_center(cell: tuple):
+            # cell is a tuple of (xmin, xmax, ymin, ymax, zmin, zmax) boundaries
             xmin, xmax, ymin, ymax, zmin, zmax = cell
             
             # get the coordinate of the center of the cell
@@ -186,7 +97,13 @@ class MixSolvMD:
                     else:
                         self.hotspots.append([cell_center(cell), oz, self.free_energy[i][j][k]])
 
-    def get_highest_occupancy(self, n=5):
+    def get_highest_occupancy(
+        self,
+        n: int = 5
+    ):
+        '''
+        Returns N hotspots with the highest occupancy ranked from highest to lowest
+        '''
         if not self.get_hotspots:
             raise ValueError('ERROR! Hotspots not generated')
         sorted_occup = sorted(enumerate([(hs[1], hs[2]) for hs in self.hotspots], start=1), key=lambda x: x[1], reverse=True)
@@ -194,7 +111,13 @@ class MixSolvMD:
 
         return top
 
-    def get_lowest_free_energy(self, n=5):
+    def get_lowest_free_energy(
+        self,
+        n: int = 5
+    ):
+        '''
+        Returns N hotspots with the highest free energy ranked from highest to lowest
+        '''
         if not self.get_hotspots:
             raise ValueError('ERROR! Hotspots not generated')
         # Need to convert nan to 0 for the sorted function
@@ -203,7 +126,17 @@ class MixSolvMD:
 
         return top
 
-    def write_pdb(self, output='file.pdb', title=''):
+    def write_pdb(
+        self,
+        output: str = 'file.pdb',
+        title: str | None = None
+    ):
+        '''
+        Write the coordinates of the hotspots with their corresponding occupancy and free energy in PDB format.
+
+        output: name of the PDB file
+        title: title of the PDB file (default: self.system_name or "Mixed Solvent MD hotspots")
+        '''
         from datetime import date
         if not self.get_hotspots:
             raise ValueError('ERROR! Hotspots not generated')
@@ -212,10 +145,6 @@ class MixSolvMD:
                 title='Mixed Solvent MD hotspots'
             else:
                 title=self.system_name
-        if self.unit == 'nm':
-            convert=10          # Convert nm to Ang
-        elif self.unit == 'Ang':
-            convert=1           # Don't convert
         with open(output, 'w') as f:
             f.writelines(f'HEADER    MIXED-SOLVENT MD    OCCUP=PROT_OCCUP; BETA=FREE_ENERGY_(KCAL/MOL)    {date.today()}\n')
             f.writelines(f'TITLE     {title}\n')
@@ -223,15 +152,26 @@ class MixSolvMD:
             for i,d in enumerate(self.hotspots):
                 if i < 99999:
                     j = i+1
-                    f.writelines(f"ATOM  {'%5s' % j}  D   DUM A   1     {'%7.3f' % (d[0][0]*convert)} {'%7.3f' % (d[0][1]*convert)} {'%7.3f' % (d[0][2]*convert)}  {'%.2f' % d[1]}  {'%.2f' % d[2]}           D\n")
+                    f.writelines(f"ATOM  {'%5s' % j}  D   DUM A   1     {'%7.3f' % (d[0][0]*10)} {'%7.3f' % (d[0][1]*10)} {'%7.3f' % (d[0][2]*10)}  {'%.2f' % d[1]}  {'%.2f' % d[2]}           D\n")
                 else:
                     if str(i)[-5:] == '99999':
                         j = 0
                     else:
                         j += 1
-                    f.writelines(f"ATOM  {'%5s' % j}  D   DUM A   1     {'%7.3f' % (d[0][0]*convert)} {'%7.3f' % (d[0][1]*convert)} {'%7.3f' % (d[0][2]*convert)}  {'%.2f' % d[1]}  {'%.2f' % d[2]}           D\n")
+                    f.writelines(f"ATOM  {'%5s' % j}  D   DUM A   1     {'%7.3f' % (d[0][0]*10)} {'%7.3f' % (d[0][1]*10)} {'%7.3f' % (d[0][2]*10)}  {'%.2f' % d[1]}  {'%.2f' % d[2]}           D\n")
 
-    def dist_to_probe(self, site_traj, unit='nm'):
+    def dist_to_probe(
+        self,
+        site_file: str,
+        unit: str = 'nm'
+    ):
+        '''
+        Retunrs the distances between the probe/ligand and a specific site of interest
+
+        site_file: name of the XVG file for site trajectories in macromolecule system
+        unit: metrics unit in which the distances will be returned (either "nm" or "Ang", default "nm")
+        '''
+        site_traj=XVG(site_file).get3Dcoord()
         distances = []
         
         for site, probe in zip(site_traj, self.macromol_traj):

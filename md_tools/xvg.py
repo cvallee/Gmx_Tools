@@ -2,12 +2,16 @@
 GROMACS .xvg files tools
 '''
 import numpy as np
+import os
 
 class XVG:
     '''Convert an .xvg file into a python object'''
     def __init__(self, file, parse=True):
-        self.filepath = file
-        self.filename = self.filepath.split('/')[-1]
+        self.filepath = os.path.abspath(file)
+        if '\\' in self.filepath:
+            self.filename = self.filepath.split('\\')[-1]
+        else:
+            self.filename = self.filepath.split('/')[-1]
         self.title = ''
         self.x_column = []
         self.x_label = ''

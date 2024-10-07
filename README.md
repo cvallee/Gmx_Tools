@@ -1,8 +1,8 @@
-# MD_Tools
+# Gmx_Tools
 
-This is a python package to help with data analysis of Molecular Dynamics simulations.
+This is a python package to help with data analysis of Molecular Dynamics simulations from GROMACS.
 
-It is recommended to import md_tools as mdt
+It is recommended to import gmx_tools as gt
 
 ## Requirements
 - NumPy
@@ -20,3 +20,10 @@ It requires:
   - 3D trajectories from simulations of all the probes for each timestep in complexe with another molecule (protein, DNA, RNA, lipid bilayer, etc...) and in bulk (water only).
   - The size of the box and the metric (only support rectangular box and nm or Ang as metrics)
   - The temperature used during the simulations
+
+## binding_events function
+
+The binding_events function allows to determine the number of binding events (and their retention time) that happened during a simulation.
+It requires:
+  - XVG file of the trajectory of the center of mass of the ligand(s) (accept multiple ligands).
+  - XVG file of the trajectory of the center of mass of the site of interest.

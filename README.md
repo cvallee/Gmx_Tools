@@ -27,7 +27,7 @@ It requires:
 
 ### binding_events function
 
-The `binding_events` function allows to determine the number of binding events (and their retention time) that happened during a simulation.
+The `binding_events` function allows to determine the number of binding events (and their retention time) that happened during a simulation.\
 It requires:
   - XVG file of the trajectory of the center of mass of the ligand(s) (accept multiple ligands).
   - XVG file of the trajectory of the center of mass of the site of interest.

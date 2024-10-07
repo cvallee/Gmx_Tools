@@ -1,7 +1,7 @@
 '''
-MD_Tools
+Gmx_Tools
 
-Python packages with some useful tools for MD users
+Python packages with some useful tools for GROMACS users
 
 '''
 

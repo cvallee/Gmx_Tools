@@ -100,7 +100,7 @@ class MixSolvMD:
     def get_highest_occupancy(
         self,
         n: int = 5
-    ):
+    ) -> list:
         '''
         Returns N hotspots with the highest occupancy ranked from highest to lowest
         '''
@@ -114,7 +114,7 @@ class MixSolvMD:
     def get_lowest_free_energy(
         self,
         n: int = 5
-    ):
+    ) -> list:
         '''
         Returns N hotspots with the highest free energy ranked from highest to lowest
         '''
@@ -164,7 +164,7 @@ class MixSolvMD:
         self,
         site_file: str,
         unit: str = 'nm'
-    ):
+    ) -> list:
         '''
         Retunrs the distances between the probe/ligand and a specific site of interest
 

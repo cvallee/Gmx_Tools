@@ -13,7 +13,7 @@ def binding_events(
 	unit: str = 'nm',
 	time: str = 'ps',
 	plot: bool = False
-):
+) -> dict:
 	'''Analyse binding events between ligand and specific site from GROMACS simulation.
 	It requires the trajectories of the CoM of the ligand(s) and the CoM of the specific site and return a dictionary of the number of binding events with their retention time per ligand.
 	

@@ -64,7 +64,7 @@ class XVG:
     def get3Dcoord(
         self,
         np_array: bool = False
-    ):
+    ) -> list:
         '''
         Returns a list of N 3D coordinates for each time step
 

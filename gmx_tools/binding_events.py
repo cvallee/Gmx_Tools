@@ -82,18 +82,14 @@ def binding_events(
 
 	if plot:
 		plt.title(f'Binding events\n({lig_xvg.filename} & {site_xvg.filename})')
-		if unit == 'Ang':
-			plt.ylim(0,15)
-		elif unit == 'nm':
-			plt.ylim(0,1.5)
+		plt.ylim(0,min_dist*2)
 		plt.xlabel(f'Time ({time})')
 		plt.ylabel(f'Distance Ligand-Site ({unit})')
+		plt.axhline(min_dist, linestyle=':', color='red', label='Binding threshold')
+		plt.legend()
 		plt.show()
 
+	if not data['Retention_times']:
+		data={'Binding_events':0,'Retention_times':None}
+	
 	return data
-
-
-
-
-
-

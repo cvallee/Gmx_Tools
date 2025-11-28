@@ -15,7 +15,7 @@ import gmx_tools as gt
 ### xvg module
 
 The `xvg` module allow to parse `.xvg` files generated from GROMACS and create an `XVG` object.
-You can then extract 3D coordinates using `mdt.XVG.get3Dcoord()` (if the `.xvg` file was generated using `gmx traj -ox` for example) or simply generate a plot using `mdt.XVG.plot()`.
+You can then extract 3D coordinates using `gt.XVG.get3Dcoord()` (if the `.xvg` file was generated using `gmx traj -ox` for example) or simply generate a plot using `gt.XVG.plot()`.
 
 ### mixsolvmd module
 

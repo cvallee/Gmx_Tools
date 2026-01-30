@@ -64,13 +64,13 @@ def binding_events(
 			else:
 				if is_bound:
 					is_bound=False
-					if ret_time:
+					if ret_time and ret_time > dt:
 						retention_times.append(ret_time)
 		if is_bound:
-			if ret_time:
+			if ret_time and ret_time > dt:
 				retention_times.append(ret_time)
 
-		if nb_binding_events:
+		if nb_binding_events and retention_times:
 			data['Binding_events'].append(nb_binding_events)
 			data['Retention_times'].append(retention_times)
 
@@ -81,15 +81,16 @@ def binding_events(
 				plt.plot([t*0.001 for t in lig_xvg.x_column], dist)
 
 	if plot:
-		plt.title(f'Binding events\n({lig_xvg.filename} & {site_xvg.filename})')
+		plt.title(f'Binding events\n({lig_xvg.filename} & {site_xvg.filename})\n')
 		plt.ylim(0,min_dist*2)
 		plt.xlabel(f'Time ({time})')
 		plt.ylabel(f'Distance Ligand-Site ({unit})')
 		plt.axhline(min_dist, linestyle=':', color='red', label='Binding threshold')
 		plt.legend()
 		plt.show()
+		plt.close()
 
 	if not data['Retention_times']:
-		data={'Binding_events':0,'Retention_times':None}
+		data={'Binding_events': 0,'Retention_times': None}
 	
 	return data

@@ -2,6 +2,7 @@
 Mixed Solvent MD tools
 '''
 from .xvg import XVG
+from .probes import 
 import numpy as np
 
 class MixSolvMD:
@@ -30,6 +31,7 @@ class MixSolvMD:
         self.box = box
         self.avogadro=6.02214076e23         # Avogadro constant in mol-1
         self.R=1.985e-3                     # Gas constant in kcal.mol-1
+        self.is_membrane = membrane
         self.temperature = temperature
         self.macromol_traj=XVG(macromol_file).get3Dcoord()
         self.bulk_traj=XVG(bulk_file).get3Dcoord()
@@ -39,13 +41,8 @@ class MixSolvMD:
             assert len(self.macromol_traj[0][0]) == 3 and len(self.bulk_traj[0][0]) == 3, 'ERROR! Coordinates provided are not 3D coordinates!'
         else:
             raise ValueError('ERROR! No macromolecule and/or bulk trajectories provided!')
-        if membrane:
-            memb_height = 4
-            self.macromol_concentration = (len(self.macromol_traj[0])/(self.avogadro * (self.box[0]*self.box[1]*(self.box[2]-memb_height))*1e-24))
-            self.bulk_concentration = (len(self.bulk_traj[0])/(self.avogadro * (self.box[0]*self.box[1]*(self.box[2]-memb_height))*1e-24))
-        else:
-            self.macromol_concentration = (len(self.macromol_traj[0])/(self.avogadro * (self.box[0]*self.box[1]*self.box[2])*1e-24))
-            self.bulk_concentration = (len(self.bulk_traj[0])/(self.avogadro * (self.box[0]*self.box[1]*self.box[2])*1e-24))
+        self.macromol_concentration = calculate_probe_conc(n_mol=len(self.macromol_traj[0]), box=self.box, unit='nm', membrane=self.is_membrane, verbosity=False)
+        self.bulk_concentration = calculate_probe_conc(n_mol=len(self.bulk_traj[0]), box=self.box, unit='nm', membrane=self.is_membrane, verbosity=False)
         if self.macromol_concentration != self.bulk_concentration:
             print("WARNING! Macromolecule and bulk systems don't have the same ligand concentrations")
 

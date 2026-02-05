@@ -23,7 +23,7 @@ class MixSolvMD:
         bulk_file: str,
         system_name:str | None = None,
         box: list = [1.0,1.0,1.0],
-        unit: str = 'nm' # nm or Ang
+        unit: str = 'nm', # nm or Ang
         membrane: bool = False,
         temperature: float = 310.15
     ):

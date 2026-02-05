@@ -23,12 +23,16 @@ class MixSolvMD:
         bulk_file: str,
         system_name:str | None = None,
         box: list = [1.0,1.0,1.0],
+        unit: str = 'nm' # nm or Ang
         membrane: bool = False,
         temperature: float = 310.15
     ):
         self.hotspots = []
         self.system_name = system_name
         self.box = box
+        self.unit = unit
+        if self.unit != 'nm' and self.unit != 'Ang':
+            raise ValueError(f'ERROR! unit {self.unit} is not supported! Please use either "nm" or "Ang", thanks.')
         self.avogadro=6.02214076e23         # Avogadro constant in mol-1
         self.R=1.985e-3                     # Gas constant in kcal.mol-1
         self.is_membrane = membrane
@@ -41,10 +45,14 @@ class MixSolvMD:
             assert len(self.macromol_traj[0][0]) == 3 and len(self.bulk_traj[0][0]) == 3, 'ERROR! Coordinates provided are not 3D coordinates!'
         else:
             raise ValueError('ERROR! No macromolecule and/or bulk trajectories provided!')
-        self.macromol_concentration = calculate_probe_conc(n_mol=len(self.macromol_traj[0]), box=self.box, unit='nm', membrane=self.is_membrane, verbosity=False)
-        self.bulk_concentration = calculate_probe_conc(n_mol=len(self.bulk_traj[0]), box=self.box, unit='nm', membrane=self.is_membrane, verbosity=False)
+        self.n_macromol_probes = len(self.macromol_traj[0])
+        self.n_bulk_probes = len(self.bulk_traj[0])
+        if self.n_macromol_probes != self.n_bulk_probes:
+            print("WARNING! Macromolecule and bulk systems don't have the same number of probes.")
+        self.macromol_concentration = calculate_probe_conc(n_mol=self.n_macromol_probes, box=self.box, unit=self.unit, membrane=self.is_membrane, verbosity=False)
+        self.bulk_concentration = calculate_probe_conc(n_mol=self.n_bulk_probes, box=self.box, unit=self.unit, membrane=self.is_membrane, verbosity=False)
         if self.macromol_concentration != self.bulk_concentration:
-            print("WARNING! Macromolecule and bulk systems don't have the same ligand concentrations")
+            print("WARNING! Macromolecule and bulk systems don't have the same ligand concentrations.")
 
     def get_hotspots(
         self,
@@ -149,18 +157,24 @@ class MixSolvMD:
             for i,d in enumerate(self.hotspots):
                 if i < 99999:
                     j = i+1
-                    f.writelines(f"ATOM  {'%5s' % j}  D   DUM A   1     {'%7.3f' % (d[0][0]*10)} {'%7.3f' % (d[0][1]*10)} {'%7.3f' % (d[0][2]*10)}  {'%.2f' % d[1]}  {'%.2f' % d[2]}           D\n")
+                    if self.unit == "nm":
+                        f.writelines(f"ATOM  {'%5s' % j}  D   DUM A   1     {'%7.3f' % (d[0][0]*10)} {'%7.3f' % (d[0][1]*10)} {'%7.3f' % (d[0][2]*10)}  {'%.2f' % d[1]}  {'%.2f' % d[2]}           D\n")
+                    else:
+                        f.writelines(f"ATOM  {'%5s' % j}  D   DUM A   1     {'%7.3f' % (d[0][0])} {'%7.3f' % (d[0][1])} {'%7.3f' % (d[0][2])}  {'%.2f' % d[1]}  {'%.2f' % d[2]}           D\n")
                 else:
                     if str(i)[-5:] == '99999':
                         j = 0
                     else:
                         j += 1
-                    f.writelines(f"ATOM  {'%5s' % j}  D   DUM A   1     {'%7.3f' % (d[0][0]*10)} {'%7.3f' % (d[0][1]*10)} {'%7.3f' % (d[0][2]*10)}  {'%.2f' % d[1]}  {'%.2f' % d[2]}           D\n")
+                    if self.unit == "nm":
+                        f.writelines(f"ATOM  {'%5s' % j}  D   DUM A   1     {'%7.3f' % (d[0][0]*10)} {'%7.3f' % (d[0][1]*10)} {'%7.3f' % (d[0][2]*10)}  {'%.2f' % d[1]}  {'%.2f' % d[2]}           D\n")
+                    else:
+                        f.writelines(f"ATOM  {'%5s' % j}  D   DUM A   1     {'%7.3f' % (d[0][0])} {'%7.3f' % (d[0][1])} {'%7.3f' % (d[0][2])}  {'%.2f' % d[1]}  {'%.2f' % d[2]}           D\n")
 
     def dist_to_probe(
         self,
         site_file: str,
-        unit: str = 'nm'
+        unit: str = self.unit
     ) -> list:
         '''
         Retunrs the distances between the probe/ligand and a specific site of interest

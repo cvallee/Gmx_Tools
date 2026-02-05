@@ -2,7 +2,7 @@
 Mixed Solvent MD tools
 '''
 from .xvg import XVG
-from .probes import 
+from .probes import *
 import numpy as np
 
 class MixSolvMD:

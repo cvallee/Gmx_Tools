@@ -9,3 +9,4 @@ Python packages with some useful tools for GROMACS users
 from .xvg import XVG
 from .mixsolvmd import MixSolvMD
 from .binding_events import binding_events
+from .probes import calculate_nb_of_probes, calculate_probe_conc

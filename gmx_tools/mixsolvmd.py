@@ -174,7 +174,7 @@ class MixSolvMD:
     def dist_to_probe(
         self,
         site_file: str,
-        unit: str = self.unit
+        unit: str = ''
     ) -> list:
         '''
         Retunrs the distances between the probe/ligand and a specific site of interest
@@ -183,6 +183,8 @@ class MixSolvMD:
         unit: metrics unit in which the distances will be returned (either "nm" or "Ang", default "nm")
         '''
         site_traj=XVG(site_file).get3Dcoord()
+        if not unit:
+            unit = self.unit
         distances = []
         
         for site, probe in zip(site_traj, self.macromol_traj):

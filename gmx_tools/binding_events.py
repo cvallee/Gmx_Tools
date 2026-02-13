@@ -27,7 +27,7 @@ def binding_events(
 	plot: boolean (default False)
 	'''
 	data={
-	'Binding events': [],
+	'Binding_events': [],
 	'Retention_times': []
 	}
 	# Get the trajectories from files
@@ -69,7 +69,6 @@ def binding_events(
 					if ret_time and ret_time > min_ret_time:
 						retention_times.append(ret_time)
 		if is_bound:
-
 			if ret_time and ret_time > min_ret_time:
 				retention_times.append(ret_time)
 

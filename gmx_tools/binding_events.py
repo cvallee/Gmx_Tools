@@ -9,8 +9,9 @@ from matplotlib import pyplot as plt
 def binding_events(
 	ligand_file: str,
 	site_file: str,
-	min_dist: float = 0.6,
+	max_dist: float = 0.6,
 	unit: str = 'nm',
+	min_ret_time: float | None = None,
 	time: str = 'ps',
 	plot: bool = False
 ) -> dict:
@@ -19,14 +20,15 @@ def binding_events(
 	
 	ligand_file: name of the XVG file for ligand(s) CoM trajectories
 	site_file: name of the XVG file for site CoM trajectories
-	min_dist: minimum distance to consider a binding events (default 0.6 nm or 6 Ang)
+	max_dist: maximum distance to consider a binding events (default 0.6 nm or 6 Ang)
 	unit: unit used for metrics (either "nm" or "Ang", default "nm")
+	min_ret_time: minimum time in ns or ps (see time) to consider a binding event as a real binding event (default None, using dt from the xvg file)
 	time: unit used for time (either "ps" or "ns", default "ps")
 	plot: boolean (default False)
 	'''
 	data={
-	'Binding_events':[],
-	'Retention_times':[]
+	'Binding events': [],
+	'Retention_times': []
 	}
 	# Get the trajectories from files
 	lig_xvg=XVG(ligand_file)
@@ -46,33 +48,34 @@ def binding_events(
 			raise ValueError('ERROR! Metrics unit not supported! Please use either nm or Ang.')
 		# Get binding event and retention time for each ligands
 		is_bound=False
-		nb_binding_events=0
 		retention_times=[]
 		dt = lig_xvg.x_column[1]-lig_xvg.x_column[0]
 		if time == 'ns':
 			dt *= 0.001
 		elif time != 'ps':
 			raise ValueError('ERROR! Time unit not supported! Please use either ps or ns.')
+		if not min_ret_time:
+			min_ret_time = dt
 		for d in dist:
-			if d <= min_dist:
+			if d <= max_dist:
 				if not is_bound:
 					is_bound=True
-					nb_binding_events += 1
 					ret_time = dt
 				else:
 					ret_time += dt
 			else:
 				if is_bound:
 					is_bound=False
-					if ret_time and ret_time > dt:
+					if ret_time and ret_time > min_ret_time:
 						retention_times.append(ret_time)
 		if is_bound:
-			if ret_time and ret_time > dt:
+
+			if ret_time and ret_time > min_ret_time:
 				retention_times.append(ret_time)
 
-		if nb_binding_events and retention_times:
-			data['Binding_events'].append(nb_binding_events)
+		if retention_times:
 			data['Retention_times'].append(retention_times)
+			data['Binding_events'].append(len(retention_times))
 
 		if plot:
 			if time == 'ps':
@@ -82,10 +85,10 @@ def binding_events(
 
 	if plot:
 		plt.title(f'Binding events\n({lig_xvg.filename} & {site_xvg.filename})\n')
-		plt.ylim(0,min_dist*2)
+		plt.ylim(0,max_dist*2)
 		plt.xlabel(f'Time ({time})')
 		plt.ylabel(f'Distance Ligand-Site ({unit})')
-		plt.axhline(min_dist, linestyle=':', color='red', label='Binding threshold')
+		plt.axhline(max_dist, linestyle=':', color='red', label='Binding threshold')
 		plt.legend()
 		plt.show()
 		plt.close()
